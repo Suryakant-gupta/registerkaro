@@ -1,44 +1,68 @@
+import { Metadata } from 'next'
 import { prisma } from "../../../lib/db"
-import { Briefcase, Users, Building2, Calendar, MapPin, Mail, Phone } from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import Image from "next/image"
+import Link from "next/link"
 import { assets } from "../../../assets/assets"
+import { 
+  Building2, Calendar, MapPin, Mail, Phone, Users 
+} from "lucide-react"
 
+// Define proper types for Next.js page props
+type Props = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+// Define company type if you haven't already
 interface Company {
-  id: number;
-  name: string;
-  // Add other properties as needed
+  id: number
+  name: string
+  description: string
+  directors: Array<{
+    id: number
+    name: string
+  }>
+}
+
+export async function generateMetadata(
+  { params }: Props
+): Promise<Metadata> {
+  const company = await prisma.company.findUnique({
+    where: { id: Number(params.id) },
+  })
+
+  return {
+    title: company?.name || 'Company Details',
+    description: company?.description || 'Company Information'
+  }
 }
 
 export async function generateStaticParams() {
-  console.log("Generating static params...")
-  const companies = await prisma.company.findMany()
-  console.log(
-    "Companies found:",
-    companies.map((c: Company) => c.id),
-  )
-  return companies.map((company: { id: number }) => ({
-    id: company.id.toString(),
+  const companies = await prisma.company.findMany({
+    select: { id: true }
+  })
+
+  return companies.map((company) => ({
+    id: company.id.toString()
   }))
 }
 
-export default async function CompanyPage({ params }: { params: { id: string } }) {
-  console.log("Params received:", params)
+// Use the Props type for the page component
+export default async function CompanyPage({ params }: Props) {
   const company = await prisma.company.findUnique({
     where: { id: Number(params.id) },
-    include: { directors: true, services: true },
+    include: { directors: true }
   })
 
   if (!company) {
-    // console.log("Company not found, calling notFound()")
     notFound()
   }
 
+
   return (
     <div className="min-h-screen bg-white px-16">
-      {/* Hero Section with Gradient */}
-      <div
+      <div 
         className="relative h-[300px] md:h-[400px]"
         style={{
           background: "linear-gradient(96.22deg, #FFA229 9%, #1C4670 59.37%)",
@@ -60,15 +84,17 @@ export default async function CompanyPage({ params }: { params: { id: string } }
             height={50}
             className="mb-6"
           />
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{company.name}</h1>
-          <p className="text-white/90 text-lg max-w-2xl">{company.description}</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            {company.name}
+          </h1>
+          <p className="text-white/90 text-lg max-w-2xl">
+            {company.description}
+          </p>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Company Details */}
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
               <Building2 className="text-[#FFA229]" />
@@ -106,7 +132,6 @@ export default async function CompanyPage({ params }: { params: { id: string } }
             </div>
           </div>
 
-          {/* Illustration */}
           <div className="relative h-[300px] md:h-full min-h-[400px]">
             <Image
               src={assets.h2}
@@ -117,17 +142,16 @@ export default async function CompanyPage({ params }: { params: { id: string } }
           </div>
         </div>
 
-        {/* Directors Section */}
         <div className="mb-12">
           <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
             <Users className="text-[#FFA229]" />
             Board of Directors
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {company.directors.map((director: { id: number; name: string; position?: string }) => (
+            {company.directors.map((director) => (
               <div key={director.id} className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-xl font-semibold mb-2">{director.name}</h3>
-                <p className="text-gray-600 mb-4">{director.position || "Director"}</p>
+                {/* <p className="text-gray-600 mb-4">{director.position || "Director"}</p> */}
                 <div className="flex flex-wrap gap-2">
                   {["Leadership", "Strategy", "Finance"].map((skill, idx) => (
                     <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
@@ -140,7 +164,6 @@ export default async function CompanyPage({ params }: { params: { id: string } }
           </div>
         </div>
 
-        {/* Back Button */}
         <div className="mt-8">
           <Link
             href="/"
@@ -153,4 +176,3 @@ export default async function CompanyPage({ params }: { params: { id: string } }
     </div>
   )
 }
-

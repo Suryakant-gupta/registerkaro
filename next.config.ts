@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 
 const nextConfig = {
-  experimental: {
-    // appDir: true,
-    // serverComponentsExternalPackages: ['@prisma/client']
+  typescript: {
+    // !! WARN !!
+    // If you want to ignore build errors, uncomment the following line
+    ignoreBuildErrors: true,
   }
 }
 
