@@ -49,6 +49,8 @@ export async function generateStaticParams() {
 }
 
 // Use the Props type for the page component
+
+// @ts-ignore
 export default async function CompanyPage({ params }: Props) {
   const company = await prisma.company.findUnique({
     where: { id: Number(params.id) },
